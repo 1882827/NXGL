@@ -949,7 +949,7 @@ Killer:AddSwitch("Fast Punch", function(state)
 	end
 end)
 
-local Ring = window:AddTab("Matar a longa distancia")
+local Ring = window:AddTab("Matar a Longa Distancia")
 
 function gettool()
 	for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
@@ -1050,7 +1050,7 @@ getgenv().killNearby = v
 		end)
 	end)
 
-local pets = window:AddTab("Auto Buy Pets")
+local pets = window:AddTab("Comprar Pets")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local selectedPet = "Neon Guardian"
