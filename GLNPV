@@ -246,175 +246,6 @@ local godModeToggle = false
             end
         end)
 
-local autoWinBrawlSwitch = Player:AddSwitch("Auto Win Brawls", function(bool)
-    getgenv().autoWinBrawl = bool
-    
-    local function equipPunch()
-        if not getgenv().autoWinBrawl then return end
-        
-        local character = game.Players.LocalPlayer.Character
-        if not character then return false end
-        
-        if character:FindFirstChild("Punch") then return true end
-        
-        local backpack = game.Players.LocalPlayer.Backpack
-        if not backpack then return false end
-        
-        for _, tool in pairs(backpack:GetChildren()) do
-            if tool.ClassName == "Tool" and tool.Name == "Punch" then
-                tool.Parent = character
-                return true
-            end
-        end
-        return false
-    end
-    
-    local function isValidTarget(player)
-        if not player or not player.Parent then return false end
-        if player == Players.LocalPlayer then return false end
-        if whitelist[player.UserId] then return false end
-        
-        local character = player.Character
-        if not character or not character.Parent then return false end
-        
-        local humanoid = character:FindFirstChild("Humanoid")
-        if not humanoid then return false end
-        
-        if not humanoid.Health or humanoid.Health <= 0 then return false end
-        if humanoid:GetState() == Enum.HumanoidStateType.Dead then return false end
-        
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        if not rootPart or not rootPart.Parent then return false end
-        
-        return true
-    end
-    
-    local function isLocalPlayerReady()
-        local player = game.Players.LocalPlayer
-        if not player then return false end
-        
-        local character = player.Character
-        if not character or not character.Parent then return false end
-        
-        local humanoid = character:FindFirstChild("Humanoid")
-        if not humanoid or humanoid.Health <= 0 then return false end
-        
-        local leftHand = character:FindFirstChild("LeftHand")
-        local rightHand = character:FindFirstChild("RightHand")
-        
-        return (leftHand ~= nil or rightHand ~= nil)
-    end
-    
-    local function safeTouchInterest(targetPart, localPart)
-        if not targetPart or not targetPart.Parent then return false end
-        if not localPart or not localPart.Parent then return false end
-        
-        local success, err = pcall(function()
-            firetouchinterest(targetPart, localPart, 0)
-            task.wait(0.01)
-            firetouchinterest(targetPart, localPart, 1)
-        end)
-        
-        return success
-    end
-   
-    task.spawn(function()
-        while getgenv().autoWinBrawl and task.wait(0.5) do
-            if not getgenv().autoWinBrawl then break end
-            
-            if game.Players.LocalPlayer.PlayerGui.gameGui.brawlJoinLabel.Visible then
-                game.ReplicatedStorage.rEvents.brawlEvent:FireServer("joinBrawl")
-                game.Players.LocalPlayer.PlayerGui.gameGui.brawlJoinLabel.Visible = false
-            end
-        end
-    end)
-    
-    task.spawn(function()
-        while getgenv().autoWinBrawl and task.wait(0.5) do
-            if not getgenv().autoWinBrawl then break end
-            equipPunch()
-        end
-    end)
-    
-    task.spawn(function()
-        while getgenv().autoWinBrawl and task.wait(0.1) do
-            if not getgenv().autoWinBrawl then break end
-            
-            if isLocalPlayerReady() and game.ReplicatedStorage.brawlInProgress.Value then
-                local player = game.Players.LocalPlayer
-                pcall(function() player.muscleEvent:FireServer("punch", "rightHand") end)
-                pcall(function() player.muscleEvent:FireServer("punch", "leftHand") end)
-            end
-        end
-    end)
-    
-    task.spawn(function()
-        while getgenv().autoWinBrawl and task.wait(0.05) do
-            if not getgenv().autoWinBrawl then break end
-            
-            if isLocalPlayerReady() and game.ReplicatedStorage.brawlInProgress.Value then
-                local character = game.Players.LocalPlayer.Character
-                local leftHand = character:FindFirstChild("LeftHand")
-                local rightHand = character:FindFirstChild("RightHand")
-                
-                for _, player in pairs(Players:GetPlayers()) do
-                    -- Skip if toggle was turned off mid-loop
-                    if not getgenv().autoWinBrawl then break end
-                    
-                    pcall(function()
-                        if isValidTarget(player) then
-                            local targetRoot = player.Character.HumanoidRootPart
-                            
-                            if leftHand then
-                                safeTouchInterest(targetRoot, leftHand)
-                            end
-                            
-                            if rightHand then
-                                safeTouchInterest(targetRoot, rightHand)
-                            end
-                        end
-                    end)
-                    
-                    task.wait(0.01)
-                end
-            end
-        end
-    end)
-    
-    task.spawn(function()
-        local lastPlayerCount = 0
-        local stuckCounter = 0
-        
-        while getgenv().autoWinBrawl and task.wait(1) do
-            if not getgenv().autoWinBrawl then break end
-            
-            local currentPlayerCount = #Players:GetPlayers()
-           
-            if currentPlayerCount ~= lastPlayerCount then
-                stuckCounter = 0
-                lastPlayerCount = currentPlayerCount
-            else
-                stuckCounter = stuckCounter + 1
-                
-                if stuckCounter > 5 then
-                    stuckCounter = 0
-                    
-                    pcall(function()
-                        local character = game.Players.LocalPlayer.Character
-                        if character and character:FindFirstChild("Punch") then
-                            character.Punch.Parent = game.Players.LocalPlayer.Backpack
-                            task.wait(0.1)
-                            equipPunch()
-                        else
-                            equipPunch()
-                        end
-                    end)
-                end
-            end
-        end
-    end)
-end)
-
 showKillsButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 local autoRockFolder = window:AddTab("Bugar")
@@ -1153,4 +984,162 @@ pets:AddSwitch("Auto Open Aura", function(bool)
             end
         end)
     end
+end)
+
+local teleportTab = window:AddTab("Teleport")
+
+teleportTab:AddButton("Spawn", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(2, 8, 115)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado al Inicio",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Secret Area", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(1947, 2, 6191)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado al ÃƒÆ’Ã‚Ârea Secreta",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Tiny Island", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(-34, 7, 1903)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado al ÃƒÆ’Ã‚Ârea Diminuta",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Teleport Frozen", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(- 2600.00244, 3.67686558, - 403.884369, 0.0873617008, 1.0482899e-09, 0.99617666, 3.07204253e-08, 1, - 3.7464023e-09, - 0.99617666, 3.09302628e-08, 0.0873617008)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado al ÃƒÆ’Ã‚Ârea Congelada",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Mythical", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(2255, 7, 1071)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado al ÃƒÆ’Ã‚Ârea MÃƒÆ’Ã‚Â­tica",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Inferno", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(-6768, 7, -1287)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado al Infierno",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Legend", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(4604, 991, -3887)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado a Leyenda",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Muscle King Gym", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(-8646, 17, -5738)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado al Rey Musculoso",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Jungle", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(-8659, 6, 2384)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado a la Jungla",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Brawl Lava", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(4471, 119, -8836)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado al Combate de Lava",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Brawl Desert", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(960, 17, -7398)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado al Combate del Desierto",
+        Duration = 0
+    })
+end)
+
+teleportTab:AddButton("Brawl Regular", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(-1849, 20, -6335)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teletransportado al Combate de Playa",
+        Duration = 0
+    })
 end)
