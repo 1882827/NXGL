@@ -685,8 +685,8 @@ Killer:AddSwitch("Kill Target(s)", function(state)
                 punch.Parent = character
             end
 
-            local rightHand = character:FindFirstChild("RightHand")
-            local leftHand = character:FindFirstChild("LeftHand")
+            local rightHand = character:WaitForChild("RightHand", 5)
+            local leftHand = character:WaitForChild("LeftHand", 5)
 
             if rightHand and leftHand then
                 for _, name in ipairs(targetPlayerNames) do
