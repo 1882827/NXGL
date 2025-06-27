@@ -476,7 +476,7 @@ autoRockFolder:AddSwitch("Jungle Rock", function(Value)
     end)
 end)
 
-local Killer = window:AddTab("Killing")
+local Killer = window:AddTab("Matar")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local playerWhitelist = {}
