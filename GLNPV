@@ -300,6 +300,25 @@ local godModeToggle = false
 
 showKillsButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
+Player:AddSwitch("Auto Fortune Wheel", function(Value)
+    _G.autoFortuneWheelActive = Value
+    if Value then
+        local function openFortuneWheel()
+            while _G.autoFortuneWheelActive do
+                local args = {
+                    [1] = "openFortuneWheel",
+                    [2] = game:GetService("ReplicatedStorage"):WaitForChild("fortuneWheelChances"):WaitForChild("Fortune Wheel")
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("rEvents"):WaitForChild("openFortuneWheelRemote"):InvokeServer(unpack(args))
+                wait(0)
+            end
+        end
+        coroutine.wrap(openFortuneWheel)()
+    else
+        _G.autoFortuneWheelActive = false
+    end
+end)
+
 local autoRockFolder = window:AddTab("Bugar")
 
 function gettool()
